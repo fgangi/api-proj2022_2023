@@ -39,12 +39,16 @@ station* insertStation(station *head, station *s);
 void deleteStation(station **head, int dist);
 station* searchStation(station *head, int dist);
 
+// Path planning functions declaration
+void checkPath(int start, int finish);
+void planPath(station *start, station *finish);
+
 // stations global pointer
 station *stat = NULL;
 
 int main() {
 
-    int i = 0, lives[512], dist, num, life;
+    int i = 0, lives[512], dist, num, life, start, finish;
 
     char cmd[20];
 
@@ -77,6 +81,8 @@ int main() {
             }
 
         } else if(!strcmp(cmd, plan)){
+            if(scanf("%d %d", &start, &finish));
+            checkPath(start, finish);
 
         } else if(!strcmp(cmd, destroyS)){
             if(scanf("%d", &dist));
@@ -178,6 +184,13 @@ car* min(car *node) {
     return current;
 }
 
+int max(car *node) {
+    car* current = node;
+    while (current && current->r != NULL)
+        current = current->r;
+    return (current->life);
+}
+
 station* createStation(int distance, int carsNumber, int lives[]) {
     station *s = (station*)malloc(sizeof(station));
     car *cars = NULL;
@@ -187,7 +200,6 @@ station* createStation(int distance, int carsNumber, int lives[]) {
     }
     s->root = cars;
     return s;
-
 }
 
 station* insertStation(station *head, station *s) {
@@ -205,31 +217,25 @@ station* insertStation(station *head, station *s) {
 }
 
 void deleteStation(station **head, int dist) {
-    // Store head node
     station *temp = *head, *prev;
 
-    // If head node itself holds the dist to be deleted
     if(temp != NULL && temp->dist == dist){
-        *head = temp->next; // Changed head
-        free(temp); // free old head
+        *head = temp->next;
+        free(temp);
         return;
     }
 
-    // Search for the dist to be deleted, keep track of the
-    // previous node as we need to change 'prev->next'
     while(temp != NULL && temp->dist != dist){
         prev = temp;
         temp = temp->next;
     }
 
-    // If dist was not present in linked list
     if(temp == NULL)
         return;
 
-    // Unlink the node from linked list
     prev->next = temp->next;
 
-    free(temp); // Free memory
+    free(temp);
 }
 
 station* searchStation(station *head, int dist) {
@@ -240,4 +246,26 @@ station* searchStation(station *head, int dist) {
         current = current->next;
     }
     return current;
+}
+
+void checkPath(int start, int finish){
+    if(start == finish){
+        printf("%d\n", start);
+    } else {
+        planPath(searchStation(stat, start), searchStation(stat, finish));
+    }
+}
+
+void planPath(station *start, station *finish) {
+    station *curr = start;
+    int m = max(curr->root);
+    if(start->dist < finish->dist){
+        station **nodes = (station**)malloc(sizeof(station*));
+        station *tmp = curr;
+        for(int i = curr->dist; i <= curr->dist + m && tmp->next->dist <= curr->dist + m; i += tmp->next->dist, tmp = tmp->next){
+            *nodes = insertStation(*nodes, tmp->next);
+        }
+
+
+    }
 }
