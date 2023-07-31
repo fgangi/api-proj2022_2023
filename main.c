@@ -26,15 +26,21 @@ typedef struct listNode {
 } station;
 
 // (CARS) BST functions declaration
-car* newCar(int key);
-car* insertCar(car *node, int key);
-car* searchCar(car *root, int key);
-car* deleteCar(car *root, int key);
+car* newCar(int life);
+car* insertCar(car *node, int life);
+car* searchCar(car *root, int life);
+car* deleteCar(car *root, int life);
+car* min(car *node);
+
 
 // (STATIONS) List functions declaration
-void insertStation(station *prevNode, int data, car *cars);
-void deleteStation(station **head, int key);
-station* searchStation(station *head, int data);
+station* createStation(int distance, int carsNumber, int lives[]);
+station* insertStation(station *head, station *s);
+void deleteStation(station **head, int dist);
+station* searchStation(station *head, int dist);
+
+// stations global pointer
+station *stat = NULL;
 
 int main() {
 
@@ -43,8 +49,6 @@ int main() {
     char cmd[20];
 
     //cmd[i] = getchar_unlocked();
-
-    station *stat = NULL;
 
     while(scanf("%s", cmd) != EOF){
 
@@ -61,12 +65,16 @@ int main() {
 
         if(!strcmp(cmd, addS)){
             if(scanf("%d %d", &dist, &num));
-            car *cars = NULL;
             for(int j = 0; j < num; j++){
                 if(scanf("%d", &lives[j]) != '\n');
-                cars = insertCar(cars, lives[j]);
             }
-            insertStation(stat, dist, cars);
+            if(searchStation(stat, dist) == NULL){
+                station *s = createStation(dist, num, lives);
+                stat = insertStation(stat, s);
+                printf("aggiunta\n");
+            } else {
+                printf("non aggiunta\n");
+            }
 
         } else if(!strcmp(cmd, plan)){
 
@@ -81,151 +89,140 @@ int main() {
         } else if(!strcmp(cmd, destroyC)){
             if(scanf("%d %d", &dist, &life));
             station *tmp = searchStation(stat, dist);
-            if(tmp != NULL){
-                deleteCar(tmp->root, life);
+            car *tmp1 = searchCar(tmp->root, life);
+            if(tmp != NULL && tmp1 != NULL){
+                tmp->root = deleteCar(tmp->root, life);
                 printf("rottamata\n");
             } else {
                 printf("non rottamata\n");
             }
         } else if(!strcmp(cmd, addC)){
             if(scanf("%d %d", &dist, &life));
-            if(searchStation(stat, dist) != NULL){
-                stat->root = insertCar(stat->root, life);
+            station *tmp = searchStation(stat, dist);
+            if(tmp != NULL){
+                tmp->root = insertCar(tmp->root, life);
                 printf("aggiunta\n");
             } else {
                 printf("non aggiunta\n");
             }
         }
-}
-
-
+    }
 
     return 0;
 }
 
-car* newCar(int key) {
+car* newCar(int life) {
     car* temp = (car*)malloc(sizeof(car));
-    temp->life = key;
+    temp->life = life;
     temp->l = temp->r = NULL;
     return temp;
 }
 
-car* insertCar(car *node, int key) {
-    if (node == NULL)
-        return newCar(key);
+car* insertCar(car *node, int life) {
+    if(node == NULL)
+        return newCar(life);
 
-    if (key < node->life)
-        node->l = insertCar(node->l, key);
-    else if (key > node->life)
-        node->r = insertCar(node->r, key);
+    if(life <= node->life)
+        node->l = insertCar(node->l, life);
+    else if(life > node->life)
+        node->r = insertCar(node->r, life);
 
     return node;
 }
 
-car* searchCar(car *root, int key) {
-    if (root == NULL || root->life == key)
+car* searchCar(car *root, int life) {
+    if(root == NULL || root->life == life)
         return root;
 
-    if (root->life < key)
-        return searchCar(root->r, key);
+    if(root->life < life)
+        return searchCar(root->r, life);
 
-    return searchCar(root->l, key);
+    return searchCar(root->l, life);
 }
 
-car* deleteCar(car *root, int key) {
-    // Base case
-    if (root == NULL)
+car* deleteCar(car *root, int life) {
+    if(root == NULL)
         return root;
 
-    // Recursive calls for ancestors of
-    // node to be deleted
-    if (root->life > key) {
-        root->l = deleteCar(root->l, key);
-        return root;
-    } else if (root->life < key) {
-        root->r = deleteCar(root->r, key);
-        return root;
-    }
+    if(life < root->life)
+        root->l = deleteCar(root->l, life);
 
-    // We reach here when root is the node
-    // to be deleted.
+    else if(life > root->life)
+        root->r = deleteCar(root->r, life);
 
-    // If one of the children is empty
-    if (root->l == NULL) {
-        car *temp = root->r;
-        free(root);
-        return temp;
-    } else if (root->r == NULL) {
-        car *temp = root->l;
-        free(root);
-        return temp;
-    }
-
-    // If both children exist
     else {
-
-        car *succParent = root;
-
-        // Find successor
-        car *succ = root->r;
-        while (succ->l != NULL) {
-            succParent = succ;
-            succ = succ->l;
+        if(root->l == NULL) {
+            car *temp = root->r;
+            free(root);
+            return temp;
+        }
+        else if(root->r == NULL) {
+            car *temp = root->l;
+            free(root);
+            return temp;
         }
 
-        // Delete successor.  Since successor
-        // is always left child of its parent
-        // we can safely make successor's right
-        // right child as left of its parent.
-        // If there is no succ, then assign
-        // succ->right to succParent->right
-        if (succParent != root)
-            succParent->l = succ->r;
-        else
-            succParent->r = succ->r;
+        car *temp = min(root->r);
 
-        // Copy Successor Data to root
-        root->life = succ->life;
+        root->life = temp->life;
 
-        // Delete Successor and return root
-        free(succ);
-        return root;
+        root->r = deleteCar(root->r, temp->life);
     }
+    return root;
 }
 
-void insertStation(station *prevNode, int data, car *cars) {
-    if(prevNode == NULL) {
-        //printf("the given previous node cannot be NULL");
-        return;
-    }
-
-    station *newNode = (station*)malloc(sizeof(station));
-
-    newNode->dist = data;
-    newNode->root = cars;
-    newNode->next = prevNode->next;
-    prevNode->next = newNode;
+car* min(car *node) {
+    car *current = node;
+    while(current && current->l != NULL)
+        current = current->l;
+    return current;
 }
 
-void deleteStation(station **head, int key) {
+station* createStation(int distance, int carsNumber, int lives[]) {
+    station *s = (station*)malloc(sizeof(station));
+    car *cars = NULL;
+    s->dist = distance;
+    for(int i = 0; i < carsNumber; i++){
+        cars = insertCar(cars, lives[i]);
+    }
+    s->root = cars;
+    return s;
+
+}
+
+station* insertStation(station *head, station *s) {
+    if(head && head->dist <= s->dist) {
+        if(head->dist < s->dist)
+            head->next = insertStation(head->next, s);
+        return head;
+    }
+
+    station* tmp = (station*)malloc(sizeof(station));
+    tmp->dist = s->dist;
+    tmp->next = head;
+    tmp->root = s->root;
+    return tmp;
+}
+
+void deleteStation(station **head, int dist) {
     // Store head node
     station *temp = *head, *prev;
 
-    // If head node itself holds the key to be deleted
-    if(temp != NULL && temp->dist == key){
+    // If head node itself holds the dist to be deleted
+    if(temp != NULL && temp->dist == dist){
         *head = temp->next; // Changed head
         free(temp); // free old head
         return;
     }
 
-    // Search for the key to be deleted, keep track of the
+    // Search for the dist to be deleted, keep track of the
     // previous node as we need to change 'prev->next'
-    while(temp != NULL && temp->dist != key){
+    while(temp != NULL && temp->dist != dist){
         prev = temp;
         temp = temp->next;
     }
 
-    // If key was not present in linked list
+    // If dist was not present in linked list
     if(temp == NULL)
         return;
 
@@ -235,10 +232,10 @@ void deleteStation(station **head, int key) {
     free(temp); // Free memory
 }
 
-station* searchStation(station *head, int data) {
+station* searchStation(station *head, int dist) {
     station *current = head;
     while (current != NULL) {
-        if (current->dist == data)
+        if (current->dist == dist)
             return current;
         current = current->next;
     }
