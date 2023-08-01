@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-static const char *addS = "aggiungi-stazione";
-static const char *addC = "aggiungi-auto";
-static const char *destroyS = "demolisci-stazione";
-static const char *destroyC = "rottama-auto";
-static const char *plan = "pianifica-percorso";
+#include <stdbool.h>
 
 static inline int getchar_unlocked() {
     return _getchar_nolock();
@@ -19,7 +13,7 @@ typedef struct treeNode {
 } car;
 
 typedef struct listNode {
-    struct listNode *prev;
+    //struct listNode *prev;
     struct listNode *next;
     struct treeNode *root;
     int dist; // distance
@@ -40,78 +34,86 @@ void deleteStation(station **head, int dist);
 station* searchStation(station *head, int dist);
 
 // Path planning functions declaration
-void checkPath(int start, int finish);
-void planPath(station *start, station *finish);
+int* planPath(station *start, station *finish, int *numS);
 
 // stations global pointer
 station *stat = NULL;
 
 int main() {
 
-    int i = 0, lives[512], dist, num, life, start, finish;
+    int i = 0, lives[512], dist, num, life, start, finish, n;
+    char c;
 
     char cmd[20];
 
-    //cmd[i] = getchar_unlocked();
-
     while(scanf("%s", cmd) != EOF){
 
-        /*
-        while((cmd[i] >= 'a' && cmd[i] <= 'z') || cmd[i] == '-') {
-            cmd[i] = getchar_unlocked();
-            i++;
+        switch(cmd[0]) {
+            case 'a':
+                switch(cmd[9]){
+                    case 's':
+                        if(scanf("%d %d", &dist, &num));
+                        for(int j = 0; j < num; j++){
+                            if(scanf("%d", &lives[j]) != '\n');
+                        }
+                        if(searchStation(stat, dist) == NULL){
+                            station *s = createStation(dist, num, lives);
+                            stat = insertStation(stat, s);
+                            printf("aggiunta\n");
+                        } else {
+                            printf("non aggiunta\n");
+                        }
+                        break;
+
+                    case 'a':
+                        if(scanf("%d %d", &dist, &life));
+                        station *tmp = searchStation(stat, dist);
+                        if(tmp != NULL){
+                            tmp->root = insertCar(tmp->root, life);
+                            printf("aggiunta\n");
+                        } else {
+                            printf("non aggiunta\n");
+                        }
+                        break;
+                }
+                break;
+
+            case 'd':
+                if(scanf("%d", &dist));
+                if(searchStation(stat, dist) != NULL){
+                    deleteStation(&stat, dist);
+                    printf("demolita\n");
+                } else {
+                    printf("non demolita\n");
+                }
+                break;
+
+            case 'r':
+                if(scanf("%d %d", &dist, &life));
+                station *tmp = searchStation(stat, dist);
+                car *tmp1 = searchCar(tmp->root, life);
+                if(tmp != NULL && tmp1 != NULL){
+                    tmp->root = deleteCar(tmp->root, life);
+                    printf("rottamata\n");
+                } else {
+                    printf("non rottamata\n");
+                }
+                break;
+
+            case 'p':
+                if(scanf("%d %d", &start, &finish));
+                int *p = planPath(searchStation(stat, start), searchStation(stat, finish), &n);
+
+                if(p){
+                    for(int k = 0; k < n; k++)
+                        printf("%d ", p[k]);
+                    printf("\n");
+                } else {
+                    printf("nessun percorso\n");
+                }
+                break;
         }
 
-
-        cmd[i] = '\0';
-
-        */
-
-        if(!strcmp(cmd, addS)){
-            if(scanf("%d %d", &dist, &num));
-            for(int j = 0; j < num; j++){
-                if(scanf("%d", &lives[j]) != '\n');
-            }
-            if(searchStation(stat, dist) == NULL){
-                station *s = createStation(dist, num, lives);
-                stat = insertStation(stat, s);
-                printf("aggiunta\n");
-            } else {
-                printf("non aggiunta\n");
-            }
-
-        } else if(!strcmp(cmd, plan)){
-            if(scanf("%d %d", &start, &finish));
-            checkPath(start, finish);
-
-        } else if(!strcmp(cmd, destroyS)){
-            if(scanf("%d", &dist));
-            if(searchStation(stat, dist) != NULL){
-                deleteStation(&stat, dist);
-                printf("demolita\n");
-            } else {
-                printf("non demolita\n");
-            }
-        } else if(!strcmp(cmd, destroyC)){
-            if(scanf("%d %d", &dist, &life));
-            station *tmp = searchStation(stat, dist);
-            car *tmp1 = searchCar(tmp->root, life);
-            if(tmp != NULL && tmp1 != NULL){
-                tmp->root = deleteCar(tmp->root, life);
-                printf("rottamata\n");
-            } else {
-                printf("non rottamata\n");
-            }
-        } else if(!strcmp(cmd, addC)){
-            if(scanf("%d %d", &dist, &life));
-            station *tmp = searchStation(stat, dist);
-            if(tmp != NULL){
-                tmp->root = insertCar(tmp->root, life);
-                printf("aggiunta\n");
-            } else {
-                printf("non aggiunta\n");
-            }
-        }
     }
 
     return 0;
@@ -248,24 +250,65 @@ station* searchStation(station *head, int dist) {
     return current;
 }
 
-void checkPath(int start, int finish){
-    if(start == finish){
-        printf("%d\n", start);
-    } else {
-        planPath(searchStation(stat, start), searchStation(stat, finish));
-    }
-}
+int* planPath(station *start, station *finish, int *numS) {
+    *numS = 1;
+    int *path = NULL;
+    int *invPath = NULL;
+    bool noPath = false;
 
-void planPath(station *start, station *finish) {
-    station *curr = start;
-    int m = max(curr->root);
+    station *curr;
+    station *tmp = finish;
+
+    path = (int*)malloc((*numS) * sizeof(int));
+    path[*numS - 1] = finish->dist;
+
     if(start->dist < finish->dist){
-        station **nodes = (station**)malloc(sizeof(station*));
-        station *tmp = curr;
-        for(int i = curr->dist; i <= curr->dist + m && tmp->next->dist <= curr->dist + m; i += tmp->next->dist, tmp = tmp->next){
-            *nodes = insertStation(*nodes, tmp->next);
+        while(tmp != start && !noPath){
+            curr = start;
+            if(curr->dist + max(curr->root) >= curr->next->dist){
+                while(curr->dist + max(curr->root) < tmp->dist){
+                    curr = curr->next;
+                }
+                (*numS)++;
+                path = realloc(path, (*numS) * sizeof(int));
+                path[(*numS) - 1] = curr->dist;
+                tmp = curr;
+            } else {
+                noPath = true;
+            }
+        }
+        if(noPath){
+            free(path);
+            return NULL;
+        } else {
+            invPath = (int*)malloc((*numS) * sizeof(int));
+            for(int i = 0; i < *numS; i++)
+                invPath[i] = path[(*numS) - i - 1];
+            free(path);
+            return invPath;
         }
 
-
+    } else if(start->dist > finish->dist){
+        while(tmp != start && !noPath){
+            curr = start;
+            while(tmp->dist - max(tmp->root) > curr->dist){
+                curr = curr->next;
+            }
+            if(tmp->dist - max(tmp->root) > curr->dist){
+                (*numS)++;
+                path = realloc(path, (*numS) * sizeof(int));
+                path[(*numS) - 1] = curr->dist;
+                tmp = curr;
+            } else {
+                noPath = true;
+            }
+        }
+        if(noPath){
+            return NULL;
+        } else {
+            return path;
+        }
     }
+
+    return path;
 }
