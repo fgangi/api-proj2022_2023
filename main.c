@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-static inline int getchar_unlocked() {
-    return _getchar_nolock();
-}
+//static inline int getchar_unlocked() { return _getchar_nolock(); }
 
 typedef struct treeNode {
     int life; // battery life
@@ -13,7 +11,7 @@ typedef struct treeNode {
 } car;
 
 typedef struct listNode {
-    //struct listNode *prev;
+    struct listNode *prev;
     struct listNode *next;
     struct treeNode *root;
     int dist; // distance
@@ -91,10 +89,14 @@ int main() {
             case 'r':
                 if(scanf("%d %d", &dist, &life));
                 station *tmp = searchStation(stat, dist);
-                car *tmp1 = searchCar(tmp->root, life);
-                if(tmp != NULL && tmp1 != NULL){
-                    tmp->root = deleteCar(tmp->root, life);
-                    printf("rottamata\n");
+                if(tmp != NULL){
+                    car *tmp1 = searchCar(tmp->root, life);
+                    if(tmp1 != NULL) {
+                        tmp->root = deleteCar(tmp->root, life);
+                        printf("rottamata\n");
+                    } else {
+                        printf("non rottamata\n");
+                    }
                 } else {
                     printf("non rottamata\n");
                 }
@@ -105,7 +107,7 @@ int main() {
                 int *p = planPath(searchStation(stat, start), searchStation(stat, finish), &n);
 
                 if(p){
-                    for(int k = 0; k < n; k++)
+                    for(int k = n - 1; k <= 0; k--)
                         printf("%d ", p[k]);
                     printf("\n");
                 } else {
@@ -205,13 +207,13 @@ station* createStation(int distance, int carsNumber, int lives[]) {
 }
 
 station* insertStation(station *head, station *s) {
-    if(head && head->dist <= s->dist) {
+    if(head && head->dist <= s->dist){
         if(head->dist < s->dist)
             head->next = insertStation(head->next, s);
         return head;
     }
 
-    station* tmp = (station*)malloc(sizeof(station));
+    station *tmp = (station*)malloc(sizeof(station));
     tmp->dist = s->dist;
     tmp->next = head;
     tmp->root = s->root;
@@ -251,64 +253,23 @@ station* searchStation(station *head, int dist) {
 }
 
 int* planPath(station *start, station *finish, int *numS) {
-    *numS = 1;
+    *numS = 0;
     int *path = NULL;
-    int *invPath = NULL;
-    bool noPath = false;
 
-    station *curr;
-    station *tmp = finish;
+    station *curr, *tmp;
 
-    path = (int*)malloc((*numS) * sizeof(int));
-    path[*numS - 1] = finish->dist;
-
+    /*
     if(start->dist < finish->dist){
-        while(tmp != start && !noPath){
-            curr = start;
-            if(curr->dist + max(curr->root) >= curr->next->dist){
-                while(curr->dist + max(curr->root) < tmp->dist){
-                    curr = curr->next;
-                }
-                (*numS)++;
-                path = realloc(path, (*numS) * sizeof(int));
-                path[(*numS) - 1] = curr->dist;
-                tmp = curr;
-            } else {
-                noPath = true;
-            }
-        }
-        if(noPath){
-            free(path);
-            return NULL;
-        } else {
-            invPath = (int*)malloc((*numS) * sizeof(int));
-            for(int i = 0; i < *numS; i++)
-                invPath[i] = path[(*numS) - i - 1];
-            free(path);
-            return invPath;
-        }
 
     } else if(start->dist > finish->dist){
-        while(tmp != start && !noPath){
-            curr = start;
-            while(tmp->dist - max(tmp->root) > curr->dist){
-                curr = curr->next;
-            }
-            if(tmp->dist - max(tmp->root) > curr->dist){
-                (*numS)++;
-                path = realloc(path, (*numS) * sizeof(int));
-                path[(*numS) - 1] = curr->dist;
-                tmp = curr;
-            } else {
-                noPath = true;
-            }
-        }
-        if(noPath){
-            return NULL;
-        } else {
-            return path;
-        }
+
     }
+     */
+
+
+    (*numS)++;
+    path = (int*)malloc((*numS) * sizeof(int));
+    path[*numS - 1] = start->dist;
 
     return path;
 }
