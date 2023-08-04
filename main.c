@@ -274,55 +274,40 @@ station* searchStation(int dist) {
 }
 
 int* planPath(station *start, station *finish, int *num) {
-    *num = 0;
+    *num = 1;
     int *path = NULL;
+    path = (int*)malloc((*num) * sizeof(int));
 
-    station *curr, *tmp, *check;
+    station *curr, *tmp;
 
     if(start->dist < finish->dist){
-        (*num)++;
-        path = (int*)malloc((*num) * sizeof(int));
         path[*num - 1] = finish->dist;
 
-        curr = finish;
-        tmp = curr->prev;
+        curr = start;
+        tmp = finish;
 
-        while(curr != start){
-            (*num)++;
-            path = realloc(path, (*num) * sizeof(int));
-
-            while(tmp && (curr->dist - maxLife(tmp->root)) <= tmp->dist){
-                path[*num - 1] = tmp->dist;
-                tmp = tmp->prev;
+        while(tmp != start){
+            while(curr->dist + maxLife(curr->root) < tmp->dist){
+                curr = curr->next;
             }
-
-            check = searchStation(path[*num - 1]);
-
-            if(check && check != start && (check->dist + maxLife(check->root)) >= curr->dist){
-                curr = check;
-                tmp = curr->prev;
+            if(curr != tmp){
+                (*num)++;
+                path = realloc(path, (*num) * sizeof(int));
+                path[*num - 1] = curr->dist;
+                tmp = curr;
+                curr = start;
             } else {
-                break;
+                free(path);
+                return NULL;
             }
-        }
-
-        if(check == start){
-            //(*num)++;
-            //path = realloc(path, (*num) * sizeof(int));
-            //path[*num - 1] = start->dist;
-            return path;
-        } else {
-            return NULL;
         }
 
     } else if(start->dist > finish->dist){
-
+        return NULL;
+    } else {
+        //base case
+        path[*num - 1] = start->dist;
     }
-
-
-    (*num)++;
-    path = (int*)malloc((*num) * sizeof(int));
-    path[*num - 1] = start->dist;
 
     return path;
 }
