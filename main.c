@@ -22,14 +22,15 @@ car* newCar(int life);
 car* insertCar(car *node, int life);
 car* searchCar(car *root, int life);
 car* deleteCar(car *root, int life);
+void deleteAllCars(car *root);
 car* min(car *node);
-
+int max(car *node);
 
 // (STATIONS) List functions declaration
 station* createStation(int distance, int carsNumber, int lives[]);
-station* insertStation(station *head, station *s);
-void deleteStation(station **head, int dist);
-station* searchStation(station *head, int dist);
+station* insertStation(station *s);
+void deleteStation(int dist);
+station* searchStation(int dist);
 
 // Path planning functions declaration
 int* planPath(station *start, station *finish, int *numS);
@@ -54,9 +55,8 @@ int main() {
                         for(int j = 0; j < num; j++){
                             if(scanf("%d", &lives[j]) != '\n');
                         }
-                        if(searchStation(stat, dist) == NULL){
-                            station *s = createStation(dist, num, lives);
-                            stat = insertStation(stat, s);
+                        if(searchStation(dist) == NULL){
+                            stat = insertStation(createStation(dist, num, lives));
                             printf("aggiunta\n");
                         } else {
                             printf("non aggiunta\n");
@@ -65,7 +65,7 @@ int main() {
 
                     case 'a':
                         if(scanf("%d %d", &dist, &life));
-                        station *tmp = searchStation(stat, dist);
+                        station *tmp = searchStation(dist);
                         if(tmp != NULL){
                             tmp->root = insertCar(tmp->root, life);
                             printf("aggiunta\n");
@@ -78,8 +78,8 @@ int main() {
 
             case 'd':
                 if(scanf("%d", &dist));
-                if(searchStation(stat, dist) != NULL){
-                    deleteStation(&stat, dist);
+                if(searchStation(dist) != NULL){
+                    deleteStation(dist);
                     printf("demolita\n");
                 } else {
                     printf("non demolita\n");
@@ -88,7 +88,7 @@ int main() {
 
             case 'r':
                 if(scanf("%d %d", &dist, &life));
-                station *tmp = searchStation(stat, dist);
+                station *tmp = searchStation(dist);
                 if(tmp != NULL){
                     car *tmp1 = searchCar(tmp->root, life);
                     if(tmp1 != NULL) {
@@ -104,7 +104,7 @@ int main() {
 
             case 'p':
                 if(scanf("%d %d", &start, &finish));
-                int *p = planPath(searchStation(stat, start), searchStation(stat, finish), &n);
+                int *p = planPath(searchStation(start), searchStation(finish), &n);
 
                 if(p){
                     for(int k = n - 1; k <= 0; k--)
@@ -181,6 +181,16 @@ car* deleteCar(car *root, int life) {
     return root;
 }
 
+void deleteAllCars(car *root){
+    if(root == NULL)
+        return;
+
+    deleteAllCars(root->l);
+    deleteAllCars(root->r);
+
+    free(root);
+}
+
 car* min(car *node) {
     car *current = node;
     while(current && current->l != NULL)
@@ -206,44 +216,55 @@ station* createStation(int distance, int carsNumber, int lives[]) {
     return s;
 }
 
-station* insertStation(station *head, station *s) {
-    if(head && head->dist <= s->dist){
-        if(head->dist < s->dist)
-            head->next = insertStation(head->next, s);
-        return head;
+station* insertStation(station *s) {
+    if(stat == NULL){
+        stat = s;
+        s->next = NULL;
+        s->prev = NULL;
+        return stat;
     }
 
-    station *tmp = (station*)malloc(sizeof(station));
-    tmp->dist = s->dist;
-    tmp->next = head;
-    tmp->root = s->root;
-    return tmp;
+    if(s->dist < stat->dist){
+        s->next = stat;
+        s->prev = NULL;
+        stat->prev = s;
+        stat = s;
+        return stat;
+    }
+
+    station *curr = stat;
+
+    while(curr->next && curr->next->dist < s->dist){
+        curr = curr->next;
+    }
+
+    s->prev = curr;
+    s->next = curr->next;
+    curr->next = s;
+
+    if(s->next)
+        s->next->prev = s;
+
+    return stat;
 }
 
-void deleteStation(station **head, int dist) {
-    station *temp = *head, *prev;
+void deleteStation(int dist) {
+    station *temp = searchStation(dist);
 
-    if(temp != NULL && temp->dist == dist){
-        *head = temp->next;
-        free(temp);
+    if(stat == NULL || temp == NULL)
         return;
-    }
-
-    while(temp != NULL && temp->dist != dist){
-        prev = temp;
-        temp = temp->next;
-    }
-
-    if(temp == NULL)
-        return;
-
-    prev->next = temp->next;
-
+    if(stat == temp)
+        stat = temp->next;
+    if(temp->next != NULL)
+        temp->next->prev = temp->prev;
+    if(temp->prev != NULL)
+        temp->prev->next = temp->next;
+    deleteAllCars(temp->root);
     free(temp);
 }
 
-station* searchStation(station *head, int dist) {
-    station *current = head;
+station* searchStation(int dist) {
+    station *current = stat;
     while (current != NULL) {
         if (current->dist == dist)
             return current;
