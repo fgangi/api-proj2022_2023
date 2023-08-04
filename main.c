@@ -24,7 +24,7 @@ car* searchCar(car *root, int life);
 car* deleteCar(car *root, int life);
 void deleteAllCars(car *root);
 car* min(car *node);
-int max(car *node);
+int maxLife(car *node);
 
 // (STATIONS) List functions declaration
 station* createStation(int distance, int carsNumber, int lives[]);
@@ -33,7 +33,7 @@ void deleteStation(int dist);
 station* searchStation(int dist);
 
 // Path planning functions declaration
-int* planPath(station *start, station *finish, int *numS);
+int* planPath(station *start, station *finish, int *num);
 
 // stations global pointer
 station *stat = NULL;
@@ -107,7 +107,7 @@ int main() {
                 int *p = planPath(searchStation(start), searchStation(finish), &n);
 
                 if(p){
-                    for(int k = n - 1; k <= 0; k--)
+                    for(int k = n - 1; k >= 0; k--)
                         printf("%d ", p[k]);
                     printf("\n");
                 } else {
@@ -198,7 +198,7 @@ car* min(car *node) {
     return current;
 }
 
-int max(car *node) {
+int maxLife(car *node) {
     car* current = node;
     while (current && current->r != NULL)
         current = current->r;
@@ -273,24 +273,56 @@ station* searchStation(int dist) {
     return current;
 }
 
-int* planPath(station *start, station *finish, int *numS) {
-    *numS = 0;
+int* planPath(station *start, station *finish, int *num) {
+    *num = 0;
     int *path = NULL;
 
-    station *curr, *tmp;
+    station *curr, *tmp, *check;
 
-    /*
     if(start->dist < finish->dist){
+        (*num)++;
+        path = (int*)malloc((*num) * sizeof(int));
+        path[*num - 1] = finish->dist;
+
+        curr = finish;
+        tmp = curr->prev;
+
+        while(curr != start){
+            (*num)++;
+            path = realloc(path, (*num) * sizeof(int));
+
+            while(tmp && (curr->dist - maxLife(tmp->root)) <= tmp->dist){
+                path[*num - 1] = tmp->dist;
+                tmp = tmp->prev;
+            }
+
+            check = searchStation(path[*num - 1]);
+
+            if(check && check != start && (check->dist + maxLife(check->root)) >= curr->dist){
+                curr = check;
+                tmp = curr->prev;
+            } else {
+                break;
+            }
+        }
+
+        if(check == start){
+            //(*num)++;
+            //path = realloc(path, (*num) * sizeof(int));
+            //path[*num - 1] = start->dist;
+            return path;
+        } else {
+            return NULL;
+        }
 
     } else if(start->dist > finish->dist){
 
     }
-     */
 
 
-    (*numS)++;
-    path = (int*)malloc((*numS) * sizeof(int));
-    path[*numS - 1] = start->dist;
+    (*num)++;
+    path = (int*)malloc((*num) * sizeof(int));
+    path[*num - 1] = start->dist;
 
     return path;
 }
