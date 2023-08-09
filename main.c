@@ -33,14 +33,14 @@ void deleteStation(int dist);
 station* searchStation(int dist);
 
 // Path planning function(s) declaration
-void planPath(station *start, station *finish);
+int* planPath(station *start, station *finish, int *num);
 
 // stations global pointer
 station *stat = NULL;
 
 int main() {
 
-    int /*i = 0, */lives[512], dist, num, life, start, finish;
+    int /*i = 0, */lives[512], dist, num, life, start, finish, n;
     //char c;
 
     char cmd[20];
@@ -104,7 +104,18 @@ int main() {
 
             case 'p':
                 if(scanf("%d %d", &start, &finish));
-                planPath(searchStation(start), searchStation(finish));
+                int *p = planPath(searchStation(start), searchStation(finish), &n);
+
+                if(p){
+                    for(int a = n - 1; a >= 0; a--)
+                        printf("%d ", p[a]);
+                    printf("\n");
+                    free(p);
+                } else {
+                    printf("nessun percorso\n");
+                }
+
+                //free(p);
                 break;
         }
 
@@ -265,16 +276,16 @@ station* searchStation(int dist) {
     return current;
 }
 
-void planPath(station *start, station *finish) {
-    int num = 0;
-    int *path = (int*)malloc(num * sizeof(int));
+int* planPath(station *start, station *finish, int *num) {
+    *num = 0;
+    int *path = (int*)malloc((*num) * sizeof(int));
 
     station *curr, *tmp;
 
     if(start->dist < finish->dist){
-        num++;
-        path = realloc(path, num * sizeof(int));
-        path[num - 1] = finish->dist;
+        (*num)++;
+        path = realloc(path, (*num) * sizeof(int));
+        path[*num - 1] = finish->dist;
 
         curr = start;
         tmp = finish;
@@ -284,25 +295,28 @@ void planPath(station *start, station *finish) {
                 curr = curr->next;
             }
             if(curr != tmp){
-                num++;
-                path = realloc(path, num * sizeof(int));
-                path[num - 1] = curr->dist;
+                (*num)++;
+                path = realloc(path, (*num) * sizeof(int));
+                path[*num - 1] = curr->dist;
                 tmp = curr;
                 curr = start;
             } else {
                 free(path);
-                printf("nessun percorso\n");
-                return;
+                //printf("nessun percorso\n");
+                return NULL;
             }
         }
 
-        for(int a = num - 1; a >= 0; a--)
+        /*
+        for(int a = *num - 1; a >= 0; a--)
             printf("%d ", path[a]);
         printf("\n");
 
         free(path);
 
-        return;
+         */
+
+        return path;
 
     } else if(start->dist > finish->dist){
         int size = 1, pos = 0;
@@ -342,31 +356,62 @@ void planPath(station *start, station *finish) {
 
                 free(len);
 
-                printf("nessun percorso\n");
-                return;
+                //printf("nessun percorso\n");
+                return NULL;
             }
             curr = nodes[size - 1][pos - 1];
             tmp = curr->next;
         }
 
-        if(nodes[size - 1][len[size - 1] - 1] == start && len[size - 1] > 1){
-            len[size - 1] = 1;
-            nodes[size - 1] = realloc(nodes[size - 1], sizeof(station*));
-            nodes[size - 1][0] = start;
+
+        if(nodes[size - 1][len[size - 1] - 1] == start){
+            if(len[size - 1] > 1){
+                len[size - 1] = 1;
+                nodes[size - 1] = realloc(nodes[size - 1], sizeof(station*));
+                nodes[size - 1][0] = start;
+            } else {
+                if(start->dist - maxLife(start->root) <= nodes[size - 1][len[size - 1] - 1]->dist){
+                    size++;
+                    nodes = realloc(nodes, size * sizeof(station**));
+                    len = realloc(len, size * sizeof(int));
+                    nodes[size - 1] = (station**)malloc(sizeof(station*));
+                    nodes[size - 1][0] = start;
+                    len[size - 1] = 1;
+                } else {
+                    free(path);
+
+                    for(int i = size - 1; i >= 0; i--)
+                        free(nodes[i]);
+                    free(nodes);
+
+                    free(len);
+
+                    return NULL;
+                }
+            }
         } else {
-            size++;
-            nodes = realloc(nodes, size * sizeof(station**));
-            len = realloc(len, size * sizeof(int));
-            nodes[size - 1] = (station**)malloc(sizeof(station*));
-            nodes[size - 1][0] = start;
-            len[size - 1] = 1;
-            len[size - 2]--;
-            nodes[size - 2] = realloc(nodes[size - 2], len[size - 2] * sizeof(station*));
+            if(start->dist - maxLife(start->root) <= nodes[size - 1][len[size - 1] - 1]->dist){
+                size++;
+                nodes = realloc(nodes, size * sizeof(station**));
+                len = realloc(len, size * sizeof(int));
+                nodes[size - 1] = (station**)malloc(sizeof(station*));
+                nodes[size - 1][0] = start;
+                len[size - 1] = 1;
+            } else {
+                free(path);
+
+                for(int i = size - 1; i >= 0; i--)
+                    free(nodes[i]);
+                free(nodes);
+
+                free(len);
+
+                return NULL;
+            }
         }
 
 
         /*
-
         for(int i = size - 1; i >= 0; i--){
             printf("\nChunk %d:\n", size - 1 - i);
             //printf(" ");
@@ -377,55 +422,13 @@ void planPath(station *start, station *finish) {
             //printf("\n");
         }
         printf("\n\n");
-
         */
 
-        /*
-        bool found = false;
-        for(int i = size - 1, j = i - 1; i > 0; i--, j--, found = false){
-            for(int k = 0; k < len[j] && !found; k++){
-                for(int h = 0; h < len[i] && !found; h++){
-                    if(nodes[i][h]->dist == path[num - 1] && nodes[i][h]->dist - maxLife(nodes[i][h]->root) <= nodes[j][k]->dist){
-                        num++;
-                        path = realloc(path, (num) * sizeof(int));
-                        path[num - 1] = nodes[j][k]->dist;
-                        found = true;
-                    }
-                }
-            }
-        }
-         */
 
-        /*
-        // longest jump to the next chunk
-        int *max = (int*)malloc((size - 3) * sizeof(int));
-        int temp;
-
-        // start life
-        //max[size - 1] = nodes[size - 1][0]->dist - maxLife(nodes[size - 1][0]->root);
-
-        // finish life
-        //max[0] = nodes[0][0]->dist - maxLife(nodes[0][0]->root);
-
-        for(int i = size - 2; i > 1; i--){
-            max[i] = nodes[i][0]->dist - maxLife(nodes[i][0]->root);
-            for(int j = 1; j < len[i]; j++){
-                temp = nodes[i][j]->dist - maxLife(nodes[i][j]->root);
-                if(nodes[i][j]->dist - maxLife(nodes[i][j]->root) < max[i])
-                    max[i] = temp;
-            }
-        }
-
-
-        for(int i = size - 2; i > 1; i--)
-            printf("%d: Min life -> %d\n", size - 1 - i, max[i]);
-        printf("\n");
-
-         */
 
         int max, temp;
 
-        for(int i = size - 2; i > 1; i--){
+        for(int i = size - 1; i > 1; i--){
             for(int j = 0; j < len[i - 1]; j++){
                 max = nodes[i][0]->dist - maxLife(nodes[i][0]->root);
                 for(int k = 0; k < len[i]; k++){
@@ -447,6 +450,7 @@ void planPath(station *start, station *finish) {
         }
 
         /*
+
         printf("++++++++++++++++++++++++++++++++++++ REARRANGEMENT ++++++++++++++++++++++++++++++++++++");
 
         for(int i = size - 1; i >= 0; i--){
@@ -459,21 +463,21 @@ void planPath(station *start, station *finish) {
             //printf("\n");
         }
         printf("\n\nPERCORSO:\n\n");
-
         */
 
-        num++;
-        path = realloc(path, num * sizeof(int));
-        path[num - 1] = finish->dist;
+
+        (*num)++;
+        path = realloc(path, (*num) * sizeof(int));
+        path[*num - 1] = finish->dist;
 
         bool found = false;
         for(int i = 0; i < size - 1; i++, found = false){
             for(int j = 0; j < len[i] && !found && nodes[i][j] != start; j++){
                 for(int k = 0; k < len[i + 1] && !found; k++){
-                    if(nodes[i][j]->dist == path[num - 1] && nodes[i + 1][k]->dist - maxLife(nodes[i + 1][k]->root) <= nodes[i][j]->dist){
-                        num++;
-                        path = realloc(path, num * sizeof(int));
-                        path[num - 1] = nodes[i + 1][k]->dist;
+                    if(nodes[i][j]->dist == path[*num - 1] && nodes[i + 1][k]->dist - maxLife(nodes[i + 1][k]->root) <= nodes[i][j]->dist){
+                        (*num)++;
+                        path = realloc(path, (*num) * sizeof(int));
+                        path[*num - 1] = nodes[i + 1][k]->dist;
                         found = true;
                     }
                 }
@@ -481,13 +485,15 @@ void planPath(station *start, station *finish) {
         }
 
 
-        if(path[num - 1] == start->dist){
+        if(path[*num - 1] == start->dist){
 
-            for(int a = num - 1; a >= 0; a--)
-                printf("%d ", path[a]);
-            printf("\n");
+            /*
+             for(int a = *num - 1; a >= 0; a--)
+                 printf("%d ", path[a]);
+             printf("\n");
+             */
 
-            free(path);
+            //free(path);
 
             for(int i = size - 1; i >= 0; i--)
                 free(nodes[i]);
@@ -495,7 +501,7 @@ void planPath(station *start, station *finish) {
 
             free(len);
 
-            return;
+            return path;
 
         } else {
 
@@ -507,14 +513,17 @@ void planPath(station *start, station *finish) {
 
             free(len);
 
-            printf("nessun percorso\n");
-            return;
+            //printf("nessun percorso\n");
+            return NULL;
         }
 
     } else {
         //base case
-        free(path);
-        printf("%d\n", start->dist);
-        return;
+        //free(path);
+        //printf("%d\n", start->dist);
+        (*num)++;
+        path = realloc(path, (*num) * sizeof(int));
+        path[*num - 1] = start->dist;
+        return path;
     }
 }
