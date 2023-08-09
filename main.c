@@ -40,7 +40,7 @@ station *stat = NULL;
 
 int main() {
 
-    int /*i = 0, */lives[512], dist, num, life, start, finish, n;
+    int /*i = 0, */lives[512], dist, num, life, start, finish, n, *p;
     //char c;
 
     char cmd[20];
@@ -104,7 +104,7 @@ int main() {
 
             case 'p':
                 if(scanf("%d %d", &start, &finish));
-                int *p = planPath(searchStation(start), searchStation(finish), &n);
+                p = planPath(searchStation(start), searchStation(finish), &n);
 
                 if(p){
                     for(int a = n - 1; a >= 0; a--)
@@ -115,7 +115,6 @@ int main() {
                     printf("nessun percorso\n");
                 }
 
-                //free(p);
                 break;
         }
 
@@ -203,8 +202,10 @@ car* min(car *node) {
 
 int maxLife(car *node) {
     car* current = node;
-    while (current && current->r != NULL)
+    while(current && current->r != NULL)
         current = current->r;
+    if(current == NULL)
+        return 0;
     return (current->life);
 }
 
@@ -268,8 +269,8 @@ void deleteStation(int dist) {
 
 station* searchStation(int dist) {
     station *current = stat;
-    while (current != NULL) {
-        if (current->dist == dist)
+    while(current != NULL) {
+        if(current->dist == dist)
             return current;
         current = current->next;
     }
@@ -306,15 +307,6 @@ int* planPath(station *start, station *finish, int *num) {
                 return NULL;
             }
         }
-
-        /*
-        for(int a = *num - 1; a >= 0; a--)
-            printf("%d ", path[a]);
-        printf("\n");
-
-        free(path);
-
-         */
 
         return path;
 
@@ -356,7 +348,6 @@ int* planPath(station *start, station *finish, int *num) {
 
                 free(len);
 
-                //printf("nessun percorso\n");
                 return NULL;
             }
             curr = nodes[size - 1][pos - 1];
@@ -410,7 +401,6 @@ int* planPath(station *start, station *finish, int *num) {
             }
         }
 
-
         /*
         for(int i = size - 1; i >= 0; i--){
             printf("\nChunk %d:\n", size - 1 - i);
@@ -423,8 +413,6 @@ int* planPath(station *start, station *finish, int *num) {
         }
         printf("\n\n");
         */
-
-
 
         int max, temp;
 
@@ -465,7 +453,6 @@ int* planPath(station *start, station *finish, int *num) {
         printf("\n\nPERCORSO:\n\n");
         */
 
-
         (*num)++;
         path = realloc(path, (*num) * sizeof(int));
         path[*num - 1] = finish->dist;
@@ -487,14 +474,6 @@ int* planPath(station *start, station *finish, int *num) {
 
         if(path[*num - 1] == start->dist){
 
-            /*
-             for(int a = *num - 1; a >= 0; a--)
-                 printf("%d ", path[a]);
-             printf("\n");
-             */
-
-            //free(path);
-
             for(int i = size - 1; i >= 0; i--)
                 free(nodes[i]);
             free(nodes);
@@ -513,14 +492,11 @@ int* planPath(station *start, station *finish, int *num) {
 
             free(len);
 
-            //printf("nessun percorso\n");
             return NULL;
         }
 
     } else {
         //base case
-        //free(path);
-        //printf("%d\n", start->dist);
         (*num)++;
         path = realloc(path, (*num) * sizeof(int));
         path[*num - 1] = start->dist;
