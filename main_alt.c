@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+
+//static inline int getchar_unlocked() { return _getchar_nolock(); }
 
 typedef struct treeNode {
     int life; // battery life
@@ -14,6 +17,9 @@ typedef struct listNode {
     struct treeNode *root;
     int dist; // distance
 } station;
+
+// Utility function(s) declaration
+int* inputParser(char *input);
 
 // (CARS) BST functions declaration
 car* newCar(int life);
@@ -38,22 +44,43 @@ station *stat = NULL;
 
 int main() {
 
-    int lives[512], dist, num, life, start, finish, n, *p;
+    int i, dim, n, *p, *input;
+    char c, *cmd;
 
-    char cmd[20];
+    while(1){
 
-    while(scanf("%s", cmd) != EOF){
+        i = 0;
+        dim = 50;
+        cmd = (char*)malloc(dim * sizeof(char));
 
-        switch(cmd[0]) {
+        while(1){
+            c = getchar_unlocked();
+
+            if(c == EOF || c == '\n')
+                break;
+
+            cmd[i] = c;
+            i++;
+
+            if(i >= dim){
+                dim += 10;
+                cmd = realloc(cmd, dim * sizeof(char));
+            }
+        }
+
+        if(c == EOF)
+            break;
+
+        cmd[i] = '\0';
+
+        switch(cmd[0]){
+
             case 'a':
                 switch(cmd[9]){
                     case 's':
-                        if(scanf("%d %d", &dist, &num));
-                        for(int j = 0; j < num; j++){
-                            if(scanf("%d", &lives[j]) != '\n');
-                        }
-                        if(searchStation(dist) == NULL){
-                            stat = insertStation(createStation(dist, num, lives));
+                        input = inputParser(cmd + 18);
+                        if(searchStation(input[0]) == NULL){
+                            stat = insertStation(createStation(input[0], input[1], &input[2]));
                             printf("aggiunta\n");
                         } else {
                             printf("non aggiunta\n");
@@ -61,10 +88,10 @@ int main() {
                         break;
 
                     case 'a':
-                        if(scanf("%d %d", &dist, &life));
-                        station *tmp = searchStation(dist);
+                        input = inputParser(cmd + 14);
+                        station *tmp = searchStation(input[0]);
                         if(tmp != NULL){
-                            tmp->root = insertCar(tmp->root, life);
+                            tmp->root = insertCar(tmp->root, input[1]);
                             printf("aggiunta\n");
                         } else {
                             printf("non aggiunta\n");
@@ -74,9 +101,9 @@ int main() {
                 break;
 
             case 'd':
-                if(scanf("%d", &dist));
-                if(searchStation(dist) != NULL){
-                    deleteStation(dist);
+                input = inputParser(cmd + 19);
+                if(searchStation(input[0]) != NULL){
+                    deleteStation(input[0]);
                     printf("demolita\n");
                 } else {
                     printf("non demolita\n");
@@ -84,12 +111,12 @@ int main() {
                 break;
 
             case 'r':
-                if(scanf("%d %d", &dist, &life));
-                station *tmp = searchStation(dist);
+                input = inputParser(cmd + 13);
+                station *tmp = searchStation(input[0]);
                 if(tmp != NULL){
-                    car *tmp1 = searchCar(tmp->root, life);
+                    car *tmp1 = searchCar(tmp->root, input[1]);
                     if(tmp1 != NULL) {
-                        tmp->root = deleteCar(tmp->root, life);
+                        tmp->root = deleteCar(tmp->root, input[1]);
                         printf("rottamata\n");
                     } else {
                         printf("non rottamata\n");
@@ -100,8 +127,8 @@ int main() {
                 break;
 
             case 'p':
-                if(scanf("%d %d", &start, &finish));
-                p = planPath(searchStation(start), searchStation(finish), &n);
+                input = inputParser(cmd + 19);
+                p = planPath(searchStation(input[0]), searchStation(input[1]), &n);
 
                 if(p){
                     for(int a = n - 1; a >= 0; a--)
@@ -111,13 +138,37 @@ int main() {
                 } else {
                     printf("nessun percorso\n");
                 }
-
                 break;
+
         }
+
+        free(cmd);
 
     }
 
     return 0;
+}
+
+int* inputParser(char *input) {
+    char *token;
+    int i = 0;
+    // minimum input numbers (2)
+    int *in = (int*)malloc(2 * sizeof(int));
+
+    token = strtok(input, " ");
+
+    while(token != NULL){
+
+        if(i == 2)
+            in = realloc(in, (2 + in[1]) * sizeof(int));
+
+        in[i] = atoi(token);
+        i++;
+
+        token = strtok(NULL, " ");
+    }
+
+    return in;
 }
 
 car* newCar(int life) {
