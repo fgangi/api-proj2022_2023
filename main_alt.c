@@ -317,9 +317,9 @@ void deleteStation(int dist) {
 
 station* searchStation(int dist) {
     station *current = stat;
-    while(current != NULL) {
-        if(current->dist == dist)
-            return current;
+    while(current != NULL && current->dist != dist){
+        if(current->dist > dist)
+            return NULL;
         current = current->next;
     }
     return current;
