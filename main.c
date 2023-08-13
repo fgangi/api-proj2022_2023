@@ -9,7 +9,6 @@ typedef struct treeNode {
 } car;
 
 typedef struct listNode {
-    struct listNode *prev;
     struct listNode *next;
     struct treeNode *root;
     int dist; // distance
@@ -221,14 +220,11 @@ station* insertStation(station *s) {
     if(stat == NULL){
         stat = s;
         s->next = NULL;
-        s->prev = NULL;
         return stat;
     }
 
     if(s->dist < stat->dist){
         s->next = stat;
-        s->prev = NULL;
-        stat->prev = s;
         stat = s;
         return stat;
     }
@@ -239,27 +235,31 @@ station* insertStation(station *s) {
         curr = curr->next;
     }
 
-    s->prev = curr;
     s->next = curr->next;
     curr->next = s;
-
-    if(s->next)
-        s->next->prev = s;
 
     return stat;
 }
 
 void deleteStation(int dist) {
-    station *temp = searchStation(dist);
+    station *temp = stat, *prev;
 
-    if(stat == NULL || temp == NULL)
-        return;
-    if(stat == temp)
+    if(temp != NULL && temp->dist == dist){
         stat = temp->next;
-    if(temp->next != NULL)
-        temp->next->prev = temp->prev;
-    if(temp->prev != NULL)
-        temp->prev->next = temp->next;
+        deleteAllCars(temp->root);
+        free(temp);
+        return;
+    }
+
+    while(temp != NULL && temp->dist != dist){
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if(temp == NULL)
+        return;
+
+    prev->next = temp->next;
     deleteAllCars(temp->root);
     free(temp);
 }
