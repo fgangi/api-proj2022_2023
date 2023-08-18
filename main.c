@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 typedef struct treeNode {
     int life; // battery life
@@ -12,9 +13,12 @@ typedef struct listNode {
     struct listNode *next;
     struct treeNode *root;
     int dist; // distance
+    struct listNode *l;
+    struct listNode *r;
 } station;
 
-// (CARS) BST functions declaration
+// *** CARS ***
+// BST functions declaration
 car* newCar(int life);
 car* insertCar(car *node, int life);
 car* searchCar(car *root, int life);
@@ -23,21 +27,34 @@ void deleteAllCars(car *root);
 car* min(car *node);
 int maxLife(car *node);
 
-// (STATIONS) List functions declaration
+
+// *** STATIONS ***
+// List functions declaration
 station* createStation(int distance, int carsNumber, int lives[]);
 station* insertStation(station *s);
 void deleteStation(int dist);
-station* searchStation(int dist);
+station* searchStation(station *root, int dist);
+// BST functions declaration
+station* insertStationBST(station *root, station *s);
+station* deleteStationBST(station *root, int dist);
+station* minStation(station *node);
+
 
 // Path planning function(s) declaration
 int* planPath(station *start, station *finish, int *num);
 
-// stations global pointer
+
+// Stations global pointers
 station *stat = NULL;
+station *statTree = NULL;
+
 
 int main() {
 
     int lives[512], dist, num, life, start, finish, n, *p;
+
+    station *s, *tmp;
+    car *tmp1;
 
     char cmd[20];
 
@@ -47,12 +64,14 @@ int main() {
             case 'a':
                 switch(cmd[9]){
                     case 's':
-                        if(scanf("%d %d", &dist, &num));
+                        assert(scanf("%d %d", &dist, &num));
                         for(int j = 0; j < num; j++){
-                            if(scanf("%d", &lives[j]) != '\n');
+                            assert(scanf("%d", &lives[j]) != '\n');
                         }
-                        if(searchStation(dist) == NULL){
-                            stat = insertStation(createStation(dist, num, lives));
+                        if(searchStation(statTree, dist) == NULL){
+                            s = createStation(dist, num, lives);
+                            stat = insertStation(s);
+                            statTree = insertStationBST(statTree, s);
                             printf("aggiunta\n");
                         } else {
                             printf("non aggiunta\n");
@@ -60,8 +79,8 @@ int main() {
                         break;
 
                     case 'a':
-                        if(scanf("%d %d", &dist, &life));
-                        station *tmp = searchStation(dist);
+                        assert(scanf("%d %d", &dist, &life));
+                        tmp = searchStation(statTree, dist);
                         if(tmp != NULL){
                             tmp->root = insertCar(tmp->root, life);
                             printf("aggiunta\n");
@@ -73,8 +92,9 @@ int main() {
                 break;
 
             case 'd':
-                if(scanf("%d", &dist));
-                if(searchStation(dist) != NULL){
+                assert(scanf("%d", &dist));
+                if(searchStation(statTree, dist) != NULL){
+                    statTree = deleteStationBST(statTree, dist);
                     deleteStation(dist);
                     printf("demolita\n");
                 } else {
@@ -83,10 +103,10 @@ int main() {
                 break;
 
             case 'r':
-                if(scanf("%d %d", &dist, &life));
-                station *tmp = searchStation(dist);
+                assert(scanf("%d %d", &dist, &life));
+                tmp = searchStation(statTree, dist);
                 if(tmp != NULL){
-                    car *tmp1 = searchCar(tmp->root, life);
+                    tmp1 = searchCar(tmp->root, life);
                     if(tmp1 != NULL) {
                         tmp->root = deleteCar(tmp->root, life);
                         printf("rottamata\n");
@@ -99,8 +119,8 @@ int main() {
                 break;
 
             case 'p':
-                if(scanf("%d %d", &start, &finish));
-                p = planPath(searchStation(start), searchStation(finish), &n);
+                assert(scanf("%d %d", &start, &finish));
+                p = planPath(searchStation(statTree, start), searchStation(statTree, finish), &n);
 
                 if(p){
                     for(int a = n - 1; a >= 0; a--)
@@ -213,6 +233,7 @@ station* createStation(int distance, int carsNumber, int lives[]) {
         cars = insertCar(cars, lives[i]);
     }
     s->root = cars;
+    s->r = s->l = NULL;
     return s;
 }
 
@@ -264,13 +285,65 @@ void deleteStation(int dist) {
     free(temp);
 }
 
-station* searchStation(int dist) {
-    station *current = stat;
-    while(current != NULL && current->dist != dist){
-        if(current->dist > dist)
-            return NULL;
-        current = current->next;
+station* insertStationBST(station *root, station *s) {
+    if(root == NULL)
+        return s;
+
+    if(s->dist < root->dist)
+        root->l = insertStationBST(root->l, s);
+    else if(s->dist > root->dist)
+        root->r = insertStationBST(root->r, s);
+
+    return root;
+}
+
+station* searchStation(station *root, int dist) {
+    if(root == NULL || root->dist == dist)
+        return root;
+
+    if(dist < root->dist)
+        return searchStation(root->l, dist);
+
+    return searchStation(root->r, dist);
+}
+
+station* deleteStationBST(station *root, int dist) {
+    if(root == NULL)
+        return root;
+
+    if(dist < root->dist)
+        root->l = deleteStationBST(root->l, dist);
+
+    else if(dist > root->dist)
+        root->r = deleteStationBST(root->r, dist);
+
+    else {
+        if(root->l == NULL) {
+            station *temp = root->r;
+            //free(root);
+            return temp;
+        }
+        else if(root->r == NULL) {
+            station *temp = root->l;
+            //free(root);
+            return temp;
+        }
+
+        station *temp = minStation(root->r);
+
+        root->dist = temp->dist;
+        root->root = temp->root;
+        root->next = temp->next;
+
+        root->r = deleteStationBST(root->r, temp->dist);
     }
+    return root;
+}
+
+station* minStation(station *node) {
+    station *current = node;
+    while(current && current->l != NULL)
+        current = current->l;
     return current;
 }
 
@@ -300,7 +373,6 @@ int* planPath(station *start, station *finish, int *num) {
                 curr = start;
             } else {
                 free(path);
-                //printf("nessun percorso\n");
                 return NULL;
             }
         }
@@ -398,18 +470,6 @@ int* planPath(station *start, station *finish, int *num) {
             }
         }
 
-        /*
-        for(int i = size - 1; i >= 0; i--){
-            printf("\nChunk %d:\n", size - 1 - i);
-            //printf(" ");
-            for(int j = 0; j < len[i]; j++){
-                printf("[%d] -> %d = (%d)\n", nodes[i][j]->dist, maxLife(nodes[i][j]->root), nodes[i][j]->dist - maxLife(nodes[i][j]->root));
-                //printf(" ");
-            }
-            //printf("\n");
-        }
-        printf("\n\n");
-        */
 
         int max, temp;
 
@@ -434,21 +494,6 @@ int* planPath(station *start, station *finish, int *num) {
             }
         }
 
-        /*
-
-        printf("++++++++++++++++++++++++++++++++++++ REARRANGEMENT ++++++++++++++++++++++++++++++++++++");
-
-        for(int i = size - 1; i >= 0; i--){
-            printf("\nChunk %d:\n", size - 1 - i);
-            //printf(" ");
-            for(int j = 0; j < len[i]; j++){
-                printf("[%d] -> %d = (%d)\n", nodes[i][j]->dist, maxLife(nodes[i][j]->root), nodes[i][j]->dist - maxLife(nodes[i][j]->root));
-                //printf(" ");
-            }
-            //printf("\n");
-        }
-        printf("\n\nPERCORSO:\n\n");
-        */
 
         (*num)++;
         path = realloc(path, (*num) * sizeof(int));
