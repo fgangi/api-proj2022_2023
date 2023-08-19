@@ -18,22 +18,25 @@ typedef struct listNode {
 } station;
 
 // *** CARS ***
+
 // BST functions declaration
 car* newCar(int life);
 car* insertCar(car *node, int life);
 car* searchCar(car *root, int life);
 car* deleteCar(car *root, int life);
 void deleteAllCars(car *root);
-car* min(car *node);
+car* minCar(car *node);
 int maxLife(car *node);
 
 
 // *** STATIONS ***
+
 // List functions declaration
 station* createStation(int distance, int carsNumber, int lives[]);
 station* insertStation(station *s);
 void deleteStation(int dist);
 station* searchStation(station *root, int dist);
+
 // BST functions declaration
 station* insertStationBST(station *root, station *s);
 station* deleteStationBST(station *root, int dist);
@@ -52,11 +55,9 @@ station *statTree = NULL;
 int main() {
 
     int lives[512], dist, num, life, start, finish, n, *p;
-
+    char cmd[20];
     station *s, *tmp;
     car *tmp1;
-
-    char cmd[20];
 
     while(scanf("%s", cmd) != EOF){
 
@@ -190,7 +191,7 @@ car* deleteCar(car *root, int life) {
             return temp;
         }
 
-        car *temp = min(root->r);
+        car *temp = minCar(root->r);
 
         root->life = temp->life;
 
@@ -209,7 +210,7 @@ void deleteAllCars(car *root){
     free(root);
 }
 
-car* min(car *node) {
+car* minCar(car *node) {
     car *current = node;
     while(current && current->l != NULL)
         current = current->l;
