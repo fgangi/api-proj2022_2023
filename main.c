@@ -17,9 +17,8 @@ typedef struct listNode {
     struct listNode *r;
 } station;
 
-// *** CARS ***
 
-// BST functions declaration
+// Cars BST functions
 car* newCar(int life);
 car* insertCar(car *node, int life);
 car* searchCar(car *root, int life);
@@ -28,29 +27,23 @@ void deleteAllCars(car *root);
 car* minCar(car *node);
 int maxLife(car *node);
 
-
-// *** STATIONS ***
-
-// List functions declaration
+// Stations list functions
 station* createStation(int distance, int carsNumber, int lives[]);
 station* insertStation(station *s);
 void deleteStation(int dist);
 station* searchStation(station *root, int dist);
 
-// BST functions declaration
+// Stations BST functions
 station* insertStationBST(station *root, station *s);
 station* deleteStationBST(station *root, int dist);
 station* minStation(station *node);
 
-
-// Path planning function(s) declaration
+// Path planning function
 int* planPath(station *start, station *finish, int *num);
-
 
 // Stations global pointers
 station *stat = NULL;
 station *statTree = NULL;
-
 
 int main() {
 
@@ -321,12 +314,10 @@ station* deleteStationBST(station *root, int dist) {
     else {
         if(root->l == NULL) {
             station *temp = root->r;
-            //free(root);
             return temp;
         }
         else if(root->r == NULL) {
             station *temp = root->l;
-            //free(root);
             return temp;
         }
 
