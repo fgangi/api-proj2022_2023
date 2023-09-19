@@ -1,1 +1,1 @@
-# Prova Finale (Progetto di Algoritmi e Strutture Dati) [API] A.A. 2022-2023
+# Prova Finale (Progetto di Algoritmi e Strutture Dati) A.A. 2022-2023
