@@ -13,3 +13,6 @@ The algorithm is implemented in C language, leveraging various data structures a
 
 ### Final score
 My final grade was 27/30.
+
+## Author
+Francesco Gangi.
